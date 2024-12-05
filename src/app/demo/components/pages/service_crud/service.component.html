@@ -1,0 +1,154 @@
+<div class="grid">
+  <div class="col-12">
+    <div class="card">
+      <!-- Toast para mensagens -->
+      <p-toast></p-toast>
+
+      <!-- Barra de ferramentas -->
+      <p-toolbar>
+        <ng-template pTemplate="left">
+          <button 
+            pButton 
+            pRipple 
+            label="Novo" 
+            icon="pi pi-plus" 
+            class="p-button-success mr-2" 
+            style="border-radius: 0.5rem;" 
+            (click)="openNew()">
+          </button>
+          <button 
+            pButton 
+            pRipple 
+            label="Apagar" 
+            icon="pi pi-trash" 
+            class="p-button-danger" 
+            style="border-radius: 0.5rem;" 
+            (click)="deleteSelectedServices()" 
+            [disabled]="!selectedServices || !selectedServices.length">
+          </button>
+        </ng-template>
+      </p-toolbar>
+
+      <!-- Tabela de Serviços -->
+      <p-table [value]="services" [paginator]="true" [rows]="10" [rowsPerPageOptions]="rowsPerPageOptions" [selection]="selectedServices" (selectionChange)="selectedServices = $event">
+        <ng-template pTemplate="header">
+          <tr>
+            <th style="width: 3rem">
+              <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+            </th>
+            <th pSortableColumn="nome">Serviço <p-sortIcon field="nome"></p-sortIcon></th>
+            <th pSortableColumn="descricao">Descrição <p-sortIcon field="descricao"></p-sortIcon></th>
+            <th pSortableColumn="preco">Preço <p-sortIcon field="preco"></p-sortIcon></th>
+            <th pSortableColumn="duracao">Duração <p-sortIcon field="duracao"></p-sortIcon></th>
+            <th>Ações</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-service>
+          <tr>
+            <td><p-tableCheckbox [value]="service"></p-tableCheckbox></td>
+            <td>{{ service.nome }}</td>
+            <td>{{ service.descricao }}</td>
+            <td>{{ service.preco | currency: 'BRL' }}</td>
+            <td>{{ service.duracao }} min</td>
+            <td>
+              <button 
+                pButton 
+                icon="pi pi-pencil" 
+                class="p-button-rounded p-button-success mr-2" 
+                style="width: 2.5rem; height: 2.5rem;" 
+                (click)="editService(service)">
+              </button>
+              <button 
+                pButton 
+                icon="pi pi-trash" 
+                class="p-button-rounded p-button-warning" 
+                style="width: 2.5rem; height: 2.5rem;" 
+                (click)="deleteService(service)">
+              </button>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+
+      <!-- Dialog para Criar/Editar Serviço -->
+      <p-dialog [(visible)]="serviceDialog" [style]="{ width: '450px' }" header="Detalhes do Serviço" [modal]="true" class="p-fluid">
+        <ng-template pTemplate="content">
+          <div class="field">
+            <label for="nome">Nome do Serviço</label>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <i class="pi pi-tag" style="font-size: 1.2rem; color: #6c757d;"></i>
+              <input type="text" pInputText id="nome" [(ngModel)]="service.nome" placeholder="Digite o Nome do Serviço" required />
+            </div>
+            <small class="p-error" *ngIf="submitted && !service.nome">Campo Nome do Serviço é obrigatório.</small>
+          </div>
+          <div class="field">
+            <label for="descricao">Descrição</label>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <i class="pi pi-align-left" style="font-size: 1.2rem; color: #6c757d;"></i>
+              <textarea pInputTextarea id="descricao" [(ngModel)]="service.descricao" placeholder="Digite a Descrição" required></textarea>
+            </div>
+            <small class="p-error" *ngIf="submitted && !service.descricao">Campo Descrição é obrigatório.</small>
+          </div>
+          <div class="field">
+            <label for="preco">Preço</label>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <i class="pi pi-dollar" style="font-size: 1.2rem; color: #6c757d;"></i>
+              <p-inputNumber 
+                id="preco" 
+                mode="currency" 
+                currency="BRL" 
+                locale="pt-BR" 
+                [(ngModel)]="service.preco" 
+                placeholder="Digite o Preço" 
+                required>
+              </p-inputNumber>
+            </div>
+            <small class="p-error" *ngIf="submitted && !service.preco">Campo Preço é obrigatório.</small>
+          </div>
+          <div class="field">
+            <label for="duracao">Duração (min)</label>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <i class="pi pi-clock" style="font-size: 1.2rem; color: #6c757d;"></i>
+              <p-inputNumber 
+                id="duracao" 
+                [(ngModel)]="service.duracao" 
+                suffix=" min" 
+                placeholder="Digite a Duração (min)" 
+                required>
+              </p-inputNumber>
+            </div>
+            <small class="p-error" *ngIf="submitted && !service.duracao">Campo Duração é obrigatório.</small>
+          </div>
+        </ng-template>
+        <ng-template pTemplate="footer">
+          <button pButton label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="hideDialog()"></button>
+          <button pButton label="Salvar" icon="pi pi-check" class="p-button-text" (click)="saveService()"></button>
+        </ng-template>
+      </p-dialog>
+
+      <!-- Diálogo de confirmação para deletar um único serviço -->
+      <p-dialog [(visible)]="deleteServiceDialog" header="Confirmar" [modal]="true" [style]="{width:'450px'}">
+          <div class="flex align-items-center justify-content-center">
+              <i class="pi pi-exclamation-circle mr-3" style="font-size: 2rem; color: #ff9800;"></i>
+              <span>Tem certeza que deseja apagar? <b>{{ service.nome }}</b>?</span>
+          </div>
+          <ng-template pTemplate="footer">
+              <button pButton pRipple icon="pi pi-times" class="p-button-text" label="Não" (click)="deleteServiceDialog = false"></button>
+              <button pButton pRipple icon="pi pi-check" class="p-button-text" label="Sim" (click)="confirmDeleteService()"></button>
+          </ng-template>
+      </p-dialog>
+
+      <!-- Diálogo de confirmação para deletar múltiplos serviços -->
+      <p-dialog [(visible)]="deleteServicesDialog" header="Confirmar" [modal]="true" [style]="{width:'450px'}">
+          <div class="flex align-items-center justify-content-center">
+              <i class="pi pi-exclamation-circle mr-3" style="font-size: 2rem; color: #ff9800;"></i>
+              <span>Tem certeza que quer apagar os serviços selecionados?</span>
+          </div>
+          <ng-template pTemplate="footer">
+              <button pButton pRipple icon="pi pi-times" class="p-button-text" label="Não" (click)="deleteServicesDialog = false"></button>
+              <button pButton pRipple icon="pi pi-check" class="p-button-text" label="Sim" (click)="confirmDeleteSelectedServices()"></button>
+          </ng-template>
+      </p-dialog>
+    </div>
+  </div>
+</div>
